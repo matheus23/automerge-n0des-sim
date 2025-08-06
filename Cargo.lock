@@ -3354,8 +3354,8 @@ dependencies = [
 
 [[package]]
 name = "samod"
-version = "0.1.0"
-source = "git+https://github.com/matheus23/samod?branch=matheus23%2Fmake-load-send#72e12dcb9aa83fc71df01099e3f48fd6a5ca9fea"
+version = "0.2.0"
+source = "git+https://github.com/matheus23/samod?branch=matheus23%2Ffix-deadlock#cf74df3eea50a1873f041b317f36ebdddc8ab00c"
 dependencies = [
  "automerge",
  "bytes",
@@ -3371,8 +3371,8 @@ dependencies = [
 
 [[package]]
 name = "samod-core"
-version = "0.1.0"
-source = "git+https://github.com/matheus23/samod?branch=matheus23%2Fmake-load-send#72e12dcb9aa83fc71df01099e3f48fd6a5ca9fea"
+version = "0.2.0"
+source = "git+https://github.com/matheus23/samod?branch=matheus23%2Ffix-deadlock#cf74df3eea50a1873f041b317f36ebdddc8ab00c"
 dependencies = [
  "automerge",
  "base64 0.21.7",
