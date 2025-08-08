@@ -3623,8 +3623,9 @@ dependencies = [
 
 [[package]]
 name = "samod"
-version = "0.2.0"
-source = "git+https://github.com/matheus23/samod?branch=matheus23%2Ffix-deadlock#cf74df3eea50a1873f041b317f36ebdddc8ab00c"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ecd2e176d6f533e87d4967befa3f34da76aae233a0db77a5bf260bc21443b9ce"
 dependencies = [
  "automerge",
  "bytes",
@@ -3640,8 +3641,9 @@ dependencies = [
 
 [[package]]
 name = "samod-core"
-version = "0.2.0"
-source = "git+https://github.com/matheus23/samod?branch=matheus23%2Ffix-deadlock#cf74df3eea50a1873f041b317f36ebdddc8ab00c"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7aeee754feb241b82e70ee11eafb7729dd83620946db64266e11cf1ad69a0e25"
 dependencies = [
  "automerge",
  "base64 0.21.7",
