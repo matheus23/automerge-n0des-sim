@@ -70,6 +70,10 @@ impl Node for AutomergeNode {
         }
         Ok(())
     }
+
+    fn endpoint(&self) -> Option<&Endpoint> {
+        Some(self.router.endpoint())
+    }
 }
 
 const TEST_DOCUMENT_ID: &str = "2ZiqrTNH7ReMNQxNnDy3e1pvt31D";
