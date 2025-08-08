@@ -4,10 +4,7 @@ use anyhow::{Context as _, Result};
 use automerge::transaction::Transactable;
 use iroh::{Endpoint, protocol::Router};
 use iroh_automerge_repo::IrohRepo;
-use iroh_n0des::{
-    N0de, Registry,
-    simulation::{Context, Simulation, SimulationBuilder},
-};
+use iroh_n0des::simulation::{Node, RoundContext, Spawn};
 use samod::{
     DocHandle, DocumentId, PeerId, Samod,
     storage::{InMemoryStorage, Storage, StorageKey},
@@ -26,8 +23,9 @@ impl AutomergeNode {
     }
 }
 
-impl N0de for AutomergeNode {
-    async fn spawn(ep: Endpoint, _metrics: &mut Registry) -> Result<Self> {
+impl Spawn<()> for AutomergeNode {
+    async fn spawn(context: &mut iroh_n0des::simulation::SpawnContext<'_, ()>) -> Result<Self> {
+        let ep = context.bind_endpoint().await?;
         let node_id = ep.node_id();
         let storage = InMemoryStorage::new();
         storage
@@ -55,7 +53,9 @@ impl N0de for AutomergeNode {
             sync_tasks,
         })
     }
+}
 
+impl Node for AutomergeNode {
     async fn shutdown(&mut self) -> Result<()> {
         self.router.shutdown().await?;
         while let Some(result) = self.sync_tasks.join_next().await {
@@ -84,7 +84,7 @@ const TEST_STORAGE_VALUE: &[u8] = &[
 ];
 
 impl AutomergeNode {
-    async fn tick_bootstrap(&mut self, ctx: &Context) -> Result<bool> {
+    async fn tick_bootstrap(&mut self, ctx: &RoundContext<'_, ()>) -> Result<bool> {
         for addr in ctx.all_other_nodes(self.endpoint().node_id()).cloned() {
             self.sync_tasks.spawn({
                 let repo = self.repo.clone();
@@ -106,12 +106,12 @@ impl AutomergeNode {
         Ok(true)
     }
 
-    async fn tick_broadcast(&mut self, ctx: &Context) -> Result<bool> {
+    async fn tick_broadcast(&mut self, ctx: &RoundContext<'_, ()>) -> Result<bool> {
         let doc = self.get_test_doc().await?;
 
         doc.with_document(|doc| {
             doc.transact(|tx| {
-                let prop = format!("node-{}-round-{}", ctx.node_index, ctx.round);
+                let prop = format!("node-{}-round-{}", ctx.node_index(), ctx.round());
                 tx.put(automerge::ROOT, prop, "wahoo")?;
                 anyhow::Ok(())
             })
@@ -123,7 +123,7 @@ impl AutomergeNode {
         Ok(true)
     }
 
-    fn check(&self, _ctx: &Context) -> Result<()> {
+    fn check(&self, _ctx: &RoundContext<'_, ()>) -> Result<()> {
         Ok(())
     }
 
@@ -138,47 +138,20 @@ impl AutomergeNode {
 }
 
 #[iroh_n0des::sim]
-async fn automerge_simulation() -> Result<SimulationBuilder<AutomergeNode>> {
-    async fn tick(ctx: &Context, node: &mut AutomergeNode) -> Result<bool> {
-        match ctx.round {
+async fn automerge_simulation() -> Result<iroh_n0des::simulation::Builder<()>> {
+    async fn tick(node: &mut AutomergeNode, ctx: &RoundContext<'_, ()>) -> Result<bool> {
+        match ctx.round() {
             0 => node.tick_bootstrap(ctx).await,
             _ => node.tick_broadcast(ctx).await,
         }
     }
 
-    fn check(ctx: &Context, node: &AutomergeNode) -> Result<()> {
+    fn check(node: &AutomergeNode, ctx: &RoundContext<'_, ()>) -> Result<()> {
         node.check(ctx)
     }
 
-    let sim = Simulation::builder(tick)
-        .check(check)
-        .max_rounds(4)
-        .node_count(8);
+    let sim = iroh_n0des::simulation::Builder::with_setup(|| async { Ok(()) })
+        .spawn(8, AutomergeNode::builder(tick).check(check))
+        .rounds(4);
     Ok(sim)
 }
-
-// #[tokio::test]
-// async fn test_find() -> Result<()> {
-//     tracing_subscriber::fmt()
-//         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
-//         .try_init()
-//         .ok();
-
-//     let storage = InMemoryStorage::new();
-//     storage
-//         .put(
-//             StorageKey::from_parts(TEST_STORAGE_KEY),
-//             TEST_STORAGE_VALUE.to_vec(),
-//         )
-//         .await;
-//     let repo = Samod::build_tokio().with_storage(storage).load().await;
-
-//     let doc_id = DocumentId::from_str(TEST_DOCUMENT_ID).expect("hardcoded");
-//     let doc = timeout(Duration::from_secs(5), repo.find(doc_id))
-//         .await??
-//         .expect("no doc found");
-
-//     println!("Found doc: {:?}", doc.document_id());
-
-//     Ok(())
-// }

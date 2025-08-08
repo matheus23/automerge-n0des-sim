@@ -1743,7 +1743,7 @@ dependencies = [
  "automerge",
  "bytes",
  "derive_more 2.0.1",
- "iroh 0.90.0",
+ "iroh 0.91.1",
  "iroh-gossip",
  "iroh-n0des",
  "n0-future",
